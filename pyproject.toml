@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "funkagent"
+version = "0.0.1"
+description = "Minimal agent framework using OpenAI functions"
+authors = ["James Briggs <james@aurelio.ai>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+openai = "^0.27.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
