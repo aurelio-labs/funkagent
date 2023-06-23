@@ -12,6 +12,7 @@ def type_mapping(dtype):
     else:
         return "string"
 
+
 def extract_params(doc_str: str):
     # parse the docstring to get the descriptions for each parameter in dict format
     params_str = doc_str.split("\n\n")[1].split("\n")
@@ -23,6 +24,7 @@ def extract_params(doc_str: str):
             desc_match = line.replace(f":param {param_name}:", "").strip()
             params[param_name] = desc_match
     return params
+
 
 def func_to_json(func):
     # first we get function name
@@ -45,8 +47,11 @@ def func_to_json(func):
             "description": param_details.get(param_name) or "",
             "type": type_mapping(argspec.annotations[param_name])
         }
-    # get parameters for function including default values (that are optional)
-    len_optional_params = len(inspect.getfullargspec(func).defaults)
+    # calculate required parameters
+    _required = argspec.args
+    if inspect.getfullargspec(func).defaults:
+        _required = [argspec.args[i] for i, a in enumerate(argspec.args) if
+                     i + 1 not in inspect.getfullargspec(func).defaults]
     # then return everything in dict
     return {
         "name": func_name,
@@ -55,5 +60,5 @@ def func_to_json(func):
             "type": "object",
             "properties": params
         },
-        "required": argspec.args[:len_optional_params]
+        "required": _required
     }
