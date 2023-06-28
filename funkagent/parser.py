@@ -33,14 +33,11 @@ def extract_params(doc_str: str):
 
 def func_to_json(func):
     # Check if the function is a functools.partial
-    if isinstance(func, functools.partial):
-        fixed_args = dict(zip(func.func.__code__.co_varnames, func.args))
-        print(fixed_args)
-        _func = func.func
-    elif isinstance(func, functools.partialmethod):
+    if isinstance(func, functools.partial) or isinstance(func, functools.partialmethod):
         fixed_args = func.keywords
-        print(fixed_args)
         _func = func.func
+        if isinstance(func, functools.partial) and (fixed_args is None or fixed_args == {}):
+            fixed_args = dict(zip(func.func.__code__.co_varnames, func.args))
     else:
         fixed_args = {}
         _func = func

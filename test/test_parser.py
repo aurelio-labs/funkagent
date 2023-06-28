@@ -98,7 +98,7 @@ def test_func_to_json_partial_func_with_mandatory_params_single_space_doc():
     This function tests func_to_json with a function that has mandatory parameters and single space doc
     :return:
     """
-    _json_fun = func_to_json(functools.partial(func_with_mandatory_params_single_space_doc, "a"))
+    _json_fun = func_to_json(functools.partial(func_with_mandatory_params_single_space_doc, a="a"))
     assert _json_fun["name"] == "func_with_mandatory_params_single_space_doc"
     assert _json_fun["description"] == "This function has mandatory parameters"
     assert 'properties' in _json_fun["parameters"]
@@ -158,6 +158,27 @@ def test_func_to_json_func_with_optional_params_single_space_doc():
 
 
 def test_func_to_json_partial_func_with_optional_params_single_space_doc():
+    """
+    This function tests func_to_json with a function that has optional parameters and single space doc
+    :return:
+    """
+    _json_fun = func_to_json(functools.partial(func_with_optional_params_single_space_doc, a="a"))
+    print(_json_fun)
+    assert _json_fun["name"] == "func_with_optional_params_single_space_doc"
+    assert _json_fun["description"] == "This function has optional parameters"
+    assert 'properties' in _json_fun["parameters"]
+    assert 'type' in _json_fun["parameters"]
+    assert _json_fun["parameters"]["type"] == "object"
+    assert _json_fun["parameters"]["properties"] == {
+        "b": {
+            "description": "",
+            "type": "string"
+        }
+    }
+    assert _json_fun["required"] == []
+
+
+def test_func_to_json_partial_func_with_optional_params_single_space_doc_positional():
     """
     This function tests func_to_json with a function that has optional parameters and single space doc
     :return:
