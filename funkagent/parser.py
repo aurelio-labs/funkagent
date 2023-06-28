@@ -1,3 +1,4 @@
+import functools
 import inspect
 import re
 
@@ -12,41 +13,64 @@ def type_mapping(dtype):
     else:
         return "string"
 
+
 def extract_params(doc_str: str):
-    # parse the docstring to get the descriptions for each parameter in dict format
-    params_str = doc_str.split("\n\n")[1].split("\n")
+    # split doc string by newline, skipping empty lines
+    params_str = [line for line in doc_str.split("\n") if line.strip()]
     params = {}
     for line in params_str:
-        param_match = re.findall(r'(?<=:param )\w+(?=:)', line)
-        if param_match != []:
-            param_name = param_match[0]
-            desc_match = line.replace(f":param {param_name}:", "").strip()
-            params[param_name] = desc_match
+        # we only look at lines starting with ':param'
+        if line.strip().startswith(':param'):
+            param_match = re.findall(r'(?<=:param )\w+', line)
+            if param_match:
+                param_name = param_match[0]
+                desc_match = line.replace(f":param {param_name}:", "").strip()
+                # if there is a description, store it
+                if desc_match:
+                    params[param_name] = desc_match
     return params
 
+
 def func_to_json(func):
+    # Check if the function is a functools.partial
+    if isinstance(func, functools.partial):
+        fixed_args = dict(zip(func.func.__code__.co_varnames, func.args))
+        print(fixed_args)
+        _func = func.func
+    elif isinstance(func, functools.partialmethod):
+        fixed_args = func.keywords
+        print(fixed_args)
+        _func = func.func
+    else:
+        fixed_args = {}
+        _func = func
+
     # first we get function name
-    func_name = func.__name__
+    func_name = _func.__name__
     # then we get the function annotations
-    argspec = inspect.getfullargspec(func)
+    argspec = inspect.getfullargspec(_func)
     # get the function docstring
-    func_doc = inspect.getdoc(func)
+    func_doc = inspect.getdoc(_func)
     # parse the docstring to get the description
-    func_description = func_doc.split("\n\n")[0]
-    # get params
-    params = argspec.annotations
-    if 'return' in params.keys():
-        del params['return']
+    func_description = ''.join([line for line in func_doc.split("\n") if not line.strip().startswith(':')])
     # parse the docstring to get the descriptions for each parameter in dict format
-    param_details = extract_params(func_doc)
-    # attach parameter types to params
+    param_details = extract_params(func_doc) if func_doc else {}
+    # attach parameter types to params and exclude fixed args
+    # get params
+    params = {}
     for param_name in argspec.args:
-        params[param_name] = {
-            "description": param_details.get(param_name) or "",
-            "type": type_mapping(argspec.annotations[param_name])
-        }
-    # get parameters for function including default values (that are optional)
-    len_optional_params = len(inspect.getfullargspec(func).defaults)
+        if param_name not in fixed_args.keys():
+            params[param_name] = {
+                "description": param_details.get(param_name) or "",
+                "type": type_mapping(argspec.annotations.get(param_name, type(None)))
+            }
+    # calculate required parameters excluding fixed args
+    # _required = [arg for arg in argspec.args if arg not in fixed_args]
+    _required = [i for i in argspec.args if i not in fixed_args.keys()]
+    if inspect.getfullargspec(_func).defaults:
+        _required = [argspec.args[i] for i, a in enumerate(argspec.args) if
+                     argspec.args[i] not in inspect.getfullargspec(_func).defaults and argspec.args[
+                         i] not in fixed_args.keys()]
     # then return everything in dict
     return {
         "name": func_name,
@@ -55,5 +79,5 @@ def func_to_json(func):
             "type": "object",
             "properties": params
         },
-        "required": argspec.args[:len_optional_params]
+        "required": _required
     }
