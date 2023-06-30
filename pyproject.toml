@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "funkagent"
-version = "0.0.1"
+version = "0.0.3"
 description = "Minimal agent framework using OpenAI functions"
 authors = ["James Briggs <james@aurelio.ai>"]
 readme = "README.md"
