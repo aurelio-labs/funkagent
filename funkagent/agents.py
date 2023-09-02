@@ -79,7 +79,7 @@ class Agent:
         func_name = res.choices[0].message.function_call.name
         args_str = res.choices[0].message.function_call.arguments
         result = self._call_function(func_name, args_str)
-        res_msg = {'role': 'assistant', 'content': (f"The answer is {result}.")}
+        res_msg = {'role': 'function', 'name': func_name, 'content': (f"{result}")}
         self.internal_thoughts.append(res_msg)
 
     def _call_function(self, func_name: str, args_str: str):
